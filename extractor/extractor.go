@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -18,13 +19,12 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/search"
 
-	"github.com/codersrank-org/repo_info_extractor/v2/commit"
-	"github.com/codersrank-org/repo_info_extractor/v2/emailsimilarity"
-	"github.com/codersrank-org/repo_info_extractor/v2/languagedetection"
-	"github.com/codersrank-org/repo_info_extractor/v2/librarydetection"
-	"github.com/codersrank-org/repo_info_extractor/v2/librarydetection/languages"
-	"github.com/codersrank-org/repo_info_extractor/v2/obfuscation"
-	"github.com/codersrank-org/repo_info_extractor/v2/ui"
+	"github.com/Techloopio/extractor_tool/commit"
+	"github.com/Techloopio/extractor_tool/languagedetection"
+	"github.com/Techloopio/extractor_tool/librarydetection"
+	"github.com/Techloopio/extractor_tool/librarydetection/languages"
+	"github.com/Techloopio/extractor_tool/obfuscation"
+	"github.com/Techloopio/extractor_tool/ui"
 	"github.com/mholt/archiver"
 )
 
@@ -34,12 +34,9 @@ type RepoExtractor struct {
 	RepoPath                   string
 	OutputPath                 string
 	GitPath                    string
-	Headless                   bool
-	Obfuscate                  bool
-	ShowProgressBar            bool // If it is false there is no progress bar.
+	HashImportant              bool
 	SkipLibraries              bool // If it is false there is no library detection.
 	UserEmails                 []string
-	OverwrittenRepoName        string        // If set this will be used instead of the original repo name
 	TimeLimit                  time.Duration // If set the extraction will be stopped after the given time limit and the partial result will be uploaded
 	Seed                       []string
 	repo                       *repo
@@ -62,7 +59,7 @@ func (r *RepoExtractor) Extract() error {
 
 	err := r.initRepo()
 	if err != nil {
-		fmt.Println("Cannot init repo_info_extractor. Error: ", err.Error())
+		fmt.Println("Cannot init extractor_tool. Error: ", err.Error())
 		return err
 	}
 
@@ -131,22 +128,13 @@ func (r *RepoExtractor) GetRepoName(remoteOrigin string) string {
 	if strings.Contains(remoteOrigin, "http") {
 		// Cloned using http
 		parts := strings.Split(remoteOrigin, "/")
-		if r.Headless {
-			repoName = parts[len(parts)-2] + "/" + parts[len(parts)-1]
-		} else {
-			// If it's a private repo, we only need last part of the name
-			repoName = parts[len(parts)-1]
-		}
+		repoName = parts[len(parts)-1]
 	} else {
 		// Cloned using ssh
 		parts := strings.Split(remoteOrigin, ":")
 		repoName = parts[len(parts)-1]
 		parts = strings.Split(repoName, "/")
-		if r.Headless {
-			repoName = parts[len(parts)-2] + "/" + parts[len(parts)-1]
-		} else {
-			repoName = parts[len(parts)-1]
-		}
+		repoName = parts[len(parts)-1]
 	}
 
 	return repoName
@@ -185,17 +173,7 @@ func (r *RepoExtractor) analyseCommits(ctx context.Context) error {
 	allEmails := getAllEmails(commits)
 	selectedEmails := make(map[string]bool)
 
-	// If seed is provided use it in headless mode
-	if len(r.Seed) > 0 && r.Headless {
-		similarEmails := emailsimilarity.FindSimilarEmails(r.Seed, allEmails)
-		similarEmailsWithoutNames, selectedSimilarEmailsMap := getEmailsWithoutNames(similarEmails)
-		r.repo.SuggestedEmails = similarEmailsWithoutNames
-		for mail := range selectedSimilarEmailsMap {
-			selectedEmails[mail] = true
-		}
-	}
-
-	if len(r.UserEmails) == 0 && !r.Headless {
+	if len(r.UserEmails) == 0 {
 		selectedEmailsWithNames := ui.SelectEmail(allEmails)
 		emails, emailsMap := getEmailsWithoutNames(selectedEmailsWithNames)
 		r.repo.Emails = append(r.repo.Emails, emails...)
@@ -249,7 +227,7 @@ func (r *RepoExtractor) getCommits(ctx context.Context) ([]*commit.Commit, error
 
 	var pb ui.ProgressBar
 	numberOfCommits := r.getNumberOfCommits()
-	if r.ShowProgressBar && numberOfCommits > 0 {
+	if numberOfCommits > 0 {
 		pb = ui.NewProgressBar(numberOfCommits)
 	} else {
 		pb = ui.NilProgressBar()
@@ -468,12 +446,7 @@ func (r *RepoExtractor) analyseLibraries(ctx context.Context) {
 		jobs <- v
 	}
 	close(jobs)
-	var pb ui.ProgressBar
-	if r.ShowProgressBar {
-		pb = ui.NewProgressBar(len(r.userCommits))
-	} else {
-		pb = ui.NilProgressBar()
-	}
+	pb := ui.NewProgressBar(len(r.userCommits))
 	for a := 1; a <= len(r.userCommits); a++ {
 		<-results
 		pb.Inc()
@@ -506,7 +479,6 @@ func (r *RepoExtractor) getFileContent(commitHash, filePath string) ([]byte, err
 		}
 		return nil, err
 	}
-
 	return fileContents, nil
 }
 
@@ -581,6 +553,9 @@ func (r *RepoExtractor) libraryWorker(ctx context.Context, commits <-chan *commi
 				if err != nil {
 					fmt.Printf("error extracting libraries for %s: %s \n", lang, err.Error())
 				}
+				for index, fileLibrary := range fileLibraries {
+					fileLibraries[index] = strings.Replace(fileLibrary, "../", "", -1)
+				}
 				if libraries[lang] == nil {
 					libraries[lang] = make([]string, 0)
 				}
@@ -594,12 +569,47 @@ func (r *RepoExtractor) libraryWorker(ctx context.Context, commits <-chan *commi
 	return nil
 }
 
+func getStartOfDayFromStringDate(dateString string) time.Time {
+	commitDate, _ := time.Parse("2006-01-02 15:04:05 -0700", dateString)
+	return time.Date(commitDate.Year(), commitDate.Month(), commitDate.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+func contains(slice []string, value string) bool {
+	for _, sliceItem := range slice {
+		if sliceItem == value {
+			return true
+		}
+	}
+	return false
+}
+
+func commitContainsExistingDate(slice []commit.OptimizedCommitForExport, value string) (bool, int) {
+	for index, sliceItem := range slice {
+		if sliceItem.Date == value {
+			return true, index
+		}
+	}
+	return false, -1
+}
+
+func removeDuplicateStrings(slice []string) []string {
+	allKeys := make(map[string]bool)
+	list := []string{}
+	for _, item := range slice {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+	return list
+}
+
 // Writes result to the file
 func (r *RepoExtractor) export() error {
 	fmt.Println("Creating artifact at: " + r.OutputPath)
 
-	repoDataPath := r.OutputPath + "_v2.json"
-	zipPath := r.OutputPath + "_v2.json.zip"
+	repoDataPath := r.OutputPath + "_techloop.json"
+	zipPath := r.OutputPath + "__techloop.json.zip"
 	// Remove old files
 	os.Remove(repoDataPath)
 	os.Remove(zipPath)
@@ -617,31 +627,82 @@ func (r *RepoExtractor) export() error {
 	}
 
 	w := bufio.NewWriter(file)
-	if r.OverwrittenRepoName != "" {
-		r.repo.RepoName = r.OverwrittenRepoName
-	}
-	repoMetaData, err := json.Marshal(r.repo)
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(w, string(repoMetaData))
+	var preparedCommitsDataForExport []commit.OptimizedCommitForExport
 
 loop:
 	for {
 		select {
-		case commit := <-r.commitPipeline:
-			if r.Obfuscate {
-				obfuscation.Obfuscate(&commit)
+		case commitFromPipeline := <-r.commitPipeline:
+			commitDateStartHour := getStartOfDayFromStringDate(commitFromPipeline.Date)
+
+			var commitLanguages []string
+			var commitInsertions, commitDeletions int
+
+			for _, commitChangedFile := range commitFromPipeline.ChangedFiles {
+				if !contains(commitLanguages, commitChangedFile.Language) && commitChangedFile.Language != "" {
+					commitLanguages = append(commitLanguages, commitChangedFile.Language)
+				}
+				commitInsertions += commitChangedFile.Insertions
+				commitDeletions += commitChangedFile.Deletions
 			}
-			commitData, err := json.Marshal(commit)
-			if err != nil {
-				fmt.Printf("Couldn't write commit to file. CommitHash: %s Error: %s", commit.Hash, err.Error())
-				continue
+
+			if _, index := commitContainsExistingDate(preparedCommitsDataForExport, commitDateStartHour.String()); index > -1 {
+				newLibraries := preparedCommitsDataForExport[index].Libraries
+
+				for newLibraryKey, newLibrary := range commitFromPipeline.Libraries {
+					if _, currentLibraryExists := newLibraries[newLibraryKey]; currentLibraryExists {
+						for _, libraryItem := range newLibrary {
+							if !contains(newLibraries[newLibraryKey], libraryItem) {
+								newLibraries[newLibraryKey] = append(newLibraries[newLibraryKey], libraryItem)
+							}
+						}
+					} else {
+						preparedCommitsDataForExport[index].Libraries[newLibraryKey] = removeDuplicateStrings(newLibrary)
+					}
+				}
+
+				preparedCommitsDataForExport[index].Commits += 1
+				preparedCommitsDataForExport[index].Deletions += commitDeletions
+				preparedCommitsDataForExport[index].Insertions += commitInsertions
+				preparedCommitsDataForExport[index].Libraries = newLibraries
+			} else {
+				librariesWithoutDuplicity := make(map[string][]string)
+				for libraryKey, library := range commitFromPipeline.Libraries {
+					librariesWithoutDuplicity[libraryKey] = removeDuplicateStrings(library)
+				}
+
+				optimizedCommit := commit.OptimizedCommitForExport{
+					AuthorEmail: commitFromPipeline.AuthorEmail,
+					Date:        commitDateStartHour.String(),
+					Languages:   commitLanguages,
+					Libraries:   librariesWithoutDuplicity,
+					Insertions:  commitInsertions,
+					Deletions:   commitDeletions,
+					Commits:     1,
+				}
+
+				if r.HashImportant {
+					obfuscation.Obfuscate(&optimizedCommit)
+				}
+				preparedCommitsDataForExport = append(preparedCommitsDataForExport, optimizedCommit)
 			}
-			fmt.Fprintln(w, string(commitData))
+
 		case <-r.libraryExtractionCompleted:
 			break loop
 		}
+	}
+
+	sort.Slice(preparedCommitsDataForExport, func(i, j int) bool {
+		return preparedCommitsDataForExport[i].Date < preparedCommitsDataForExport[j].Date
+	})
+
+	for _, preparedCommitsDataForExportItem := range preparedCommitsDataForExport {
+		commitData, err := json.Marshal(preparedCommitsDataForExportItem)
+		if err != nil {
+			fmt.Printf("Couldn't write commit day data to file. CommitDate: %s Error: %s", preparedCommitsDataForExportItem.Date, err.Error())
+			continue
+		}
+		fmt.Fprintln(w, string(commitData))
 	}
 	w.Flush() // important
 	file.Close()
@@ -650,22 +711,12 @@ loop:
 	if err != nil {
 		fmt.Println("Couldn't make zip archive of the artifact. Error:", err.Error())
 		return err
+	} else {
+		fmt.Println("File Exported!")
 	}
 
 	// We don't need this because we already have zip file
 	os.Remove(repoDataPath)
-	return nil
-}
-
-// This is for repo_info_extractor used locally and for user to
-// upload his/her results automatically to the codersrank
-func (r *RepoExtractor) upload() error {
-	fmt.Println("Uploading result to CodersRank")
-	url, err := Upload(r.OutputPath+"_v2.json.zip", r.repo.RepoName)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Go to this link in the browser =>", url)
 	return nil
 }
 

@@ -54,7 +54,6 @@ Commands:
 -  `version` Print the version number
 
 The commands might have flags. For example `local` has:
-`--repo_name` You can overwrite the default repo name. This name will be shown on the profile page.
 `--repo_path` Path of the repo
 
 ## BitBucket

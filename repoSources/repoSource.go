@@ -4,20 +4,17 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/codersrank-org/repo_info_extractor/v2/entities"
-	"github.com/codersrank-org/repo_info_extractor/v2/extractor"
+	"github.com/Techloopio/extractor_tool/entities"
+	"github.com/Techloopio/extractor_tool/extractor"
 )
 
 type ExtractConfig struct {
-	OutputPath      string
-	GitPath         string
-	Headless        bool
-	Obfuscate       bool
-	UserEmails      []string
-	Seeds           []string
-	ShowProgressBar bool // Show progress bar only if running in interactive mode
-	SkipLibraries   bool
-	SkipUpload      bool // If this is true the artifacts won't be uploaded
+	OutputPath    string
+	GitPath       string
+	HashImportant bool
+	UserEmails    []string
+	Seeds         []string
+	SkipLibraries bool
 }
 
 // RepoSource describes the interface that each provider has to implement
@@ -50,16 +47,13 @@ func ExtractFromSource(source RepoSource, config ExtractConfig) error {
 		}
 
 		repoExtractor := extractor.RepoExtractor{
-			RepoPath:            path,
-			OutputPath:          config.OutputPath + "/" + repo.GetSafeFullName(),
-			GitPath:             config.GitPath,
-			Headless:            config.Headless,
-			Obfuscate:           config.Obfuscate,
-			UserEmails:          config.UserEmails,
-			Seed:                config.Seeds,
-			ShowProgressBar:     config.Headless != true, // Show progress bar only if running in interactive mode
-			OverwrittenRepoName: repo.Name,
-			SkipLibraries:       config.SkipLibraries,
+			RepoPath:      path,
+			OutputPath:    config.OutputPath + "/" + repo.GetSafeFullName(),
+			GitPath:       config.GitPath,
+			HashImportant: config.HashImportant,
+			UserEmails:    config.UserEmails,
+			Seed:          config.Seeds,
+			SkipLibraries: config.SkipLibraries,
 		}
 
 		err = repoExtractor.Extract()
@@ -69,12 +63,6 @@ func ExtractFromSource(source RepoSource, config ExtractConfig) error {
 		}
 
 	}
-
-	if !config.SkipUpload {
-		artifactUploader := NewArtifactUploader(config.OutputPath)
-		artifactUploader.UploadRepos(repos)
-	}
-
 	source.CleanUp()
 
 	return nil

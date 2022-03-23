@@ -1,4 +1,4 @@
-module github.com/codersrank-org/repo_info_extractor/v2
+module github.com/Techloopio/extractor_tool
 
 go 1.14
 

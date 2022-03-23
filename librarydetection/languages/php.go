@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/codersrank-org/repo_info_extractor/v2/librarydetection"
+	"github.com/Techloopio/extractor_tool/librarydetection"
 )
 
 // NewCAnalyzer constructor

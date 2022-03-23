@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	repoSource "github.com/codersrank-org/repo_info_extractor/v2/repoSources"
+	repoSource "github.com/Techloopio/extractor_tool/repoSources"
 	"github.com/spf13/cobra"
 )
 
@@ -19,15 +19,12 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			source := repoSource.NewDirectoryPath(ExtractConfig.RepoPath, ExtractConfig.RepoName)
 			config := repoSource.ExtractConfig{
-				OutputPath:      *RootConfig.OutPutPath,
-				GitPath:         *RootConfig.GitPath,
-				Headless:        *RootConfig.Headless,
-				Obfuscate:       *RootConfig.Obfuscate,
-				UserEmails:      *RootConfig.Emails,
-				Seeds:           *RootConfig.Seeds,
-				ShowProgressBar: !*RootConfig.Headless,
-				SkipLibraries:   *RootConfig.SkipLibraries,
-				SkipUpload:      *RootConfig.SkipUpload,
+				OutputPath:    *RootConfig.OutPutPath,
+				GitPath:       *RootConfig.GitPath,
+				HashImportant: *RootConfig.HashImportant,
+				UserEmails:    *RootConfig.Emails,
+				Seeds:         *RootConfig.Seeds,
+				SkipLibraries: *RootConfig.SkipLibraries,
 			}
 			err := repoSource.ExtractFromSource(source, config)
 

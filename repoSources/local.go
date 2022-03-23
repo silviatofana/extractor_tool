@@ -1,7 +1,7 @@
 package repoSource
 
 import (
-	"github.com/codersrank-org/repo_info_extractor/v2/entities"
+	"github.com/Techloopio/extractor_tool/entities"
 	"os"
 	"strings"
 )

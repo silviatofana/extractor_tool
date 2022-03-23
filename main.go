@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
+	// "os"
 
-	"github.com/codersrank-org/repo_info_extractor/v2/autoupdater"
-	"github.com/codersrank-org/repo_info_extractor/v2/cmd"
+	// "github.com/Techloopio/extractor_tool/autoupdater"
+	"github.com/Techloopio/extractor_tool/cmd"
 )
 
 var (
@@ -15,17 +15,17 @@ func main() {
 	cmd.Version = version
 
 	// Auto update
-	skipUpdate := false
-	for _, arg := range os.Args {
-		if arg == "--skip_update" {
-			skipUpdate = true
-			break
-		}
-	}
-	if !skipUpdate {
-		au := autoupdater.NewAutoUpdater(version)
-		au.CheckUpdates()
-	}
+	// skipUpdate := false
+	// for _, arg := range os.Args {
+	// 	if arg == "--skip_update" {
+	// 		skipUpdate = true
+	// 		break
+	// 	}
+	// }
+	// if !skipUpdate {
+	// 	au := autoupdater.NewAutoUpdater(version)
+	// 	au.CheckUpdates()
+	// }
 
 	cmd.Execute()
 }

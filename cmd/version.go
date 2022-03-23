@@ -14,6 +14,6 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version number",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("repo_info_extractor %s by CodersRank\n", Version)
+		fmt.Printf("extractor_tool %s by Techloop.io\n", Version)
 	},
 }
