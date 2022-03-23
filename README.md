@@ -44,28 +44,14 @@ You can find a short video about the usage
 You can see the available commands and flags with the `--help` flag. For example:
 ```
 ./repo_info_extractor_osx --help
-...
-./repo_info_extractor_osx bitbucket --help
 ```
 Commands:
--  `bitbucket` Extract repository from BitBucket
 -  `help` Help about any command
 -  `local` Extract local repository by path
 -  `version` Print the version number
 
 The commands might have flags. For example `local` has:
 `--repo_path` Path of the repo
-
-## BitBucket
-Right now only BitBucket Cloud is supported. For authentication your have to use your username
-and create an app password. You can create it here: https://bitbucket.org/account/settings/app-passwords/.
-The app password and username must be set via the `--password` and `--username` flags. Example usage:
-```
-./repo_info_extractor_osx bitbucket --username="peti2001" --password=xxxxxx --visibility=private --emails=karakas.peter@gmail.com
-```
-When you create the a new `app password` make sure you select all the necessary scopes.
-![repo_scope](https://raw.githubusercontent.com/peti2001/multi_repo_extractor/master/docs/bitbucket-scope.png)
-The safest way if you create an `app password` and use it instead of your user's password.
 
 ## Run UnitTests 
 In the root directory of the repo, run the following command:
