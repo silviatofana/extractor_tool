@@ -10,13 +10,13 @@ type Commit struct {
 }
 
 type OptimizedCommitForExport struct {
-	AuthorEmail string              `json:"authorEmail"`
-	Date        string              `json:"date"`
-	Languages   []string            `json:"languages"`
-	Insertions  int                 `json:"insertions"`
-	Deletions   int                 `json:"deletions"`
-	Libraries   map[string][]string `json:"libraries"`
-	Commits     int                 `json:"commits"`
+	AuthorEmails []string            `json:"authorEmails"`
+	Date         string              `json:"date"`
+	Languages    []string            `json:"languages"`
+	Insertions   int                 `json:"insertions"`
+	Deletions    int                 `json:"deletions"`
+	Libraries    map[string][]string `json:"libraries"`
+	Commits      int                 `json:"commits"`
 }
 
 type ChangedFile struct {

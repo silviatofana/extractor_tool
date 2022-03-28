@@ -9,7 +9,9 @@ import (
 
 // Obfuscate private info, like filename, username and emails
 func Obfuscate(c *commit.OptimizedCommitForExport) {
-	c.AuthorEmail = toMD5(c.AuthorEmail)
+	for index, email := range c.AuthorEmails {
+		c.AuthorEmails[index] = toMD5(email)
+	}
 }
 
 func toMD5(text string) string {

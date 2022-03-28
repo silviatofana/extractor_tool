@@ -604,6 +604,22 @@ func removeDuplicateStrings(slice []string) []string {
 	return list
 }
 
+func addUniqueEmailToCommitAuthorEmailsSlice(slice []string, email string) []string {
+	if emailIsNotUnique := contains(slice, email); !emailIsNotUnique {
+		slice = append(slice, email)
+	}
+
+	return slice
+}
+
+func getCommitJSonSuffix(commitSliceLength int, commitIndex int) string {
+	if commitIndex < commitSliceLength-1 {
+		return ","
+	}
+
+	return ""
+}
+
 // Writes result to the file
 func (r *RepoExtractor) export() error {
 	fmt.Println("Creating artifact at: " + r.OutputPath)
@@ -627,6 +643,7 @@ func (r *RepoExtractor) export() error {
 	}
 
 	w := bufio.NewWriter(file)
+	fmt.Fprintln(w, "[")
 	var preparedCommitsDataForExport []commit.OptimizedCommitForExport
 
 loop:
@@ -660,25 +677,27 @@ loop:
 						preparedCommitsDataForExport[index].Libraries[newLibraryKey] = removeDuplicateStrings(newLibrary)
 					}
 				}
-
 				preparedCommitsDataForExport[index].Commits += 1
 				preparedCommitsDataForExport[index].Deletions += commitDeletions
 				preparedCommitsDataForExport[index].Insertions += commitInsertions
 				preparedCommitsDataForExport[index].Libraries = newLibraries
+				preparedCommitsDataForExport[index].AuthorEmails = addUniqueEmailToCommitAuthorEmailsSlice(preparedCommitsDataForExport[index].AuthorEmails, commitFromPipeline.AuthorEmail)
+
 			} else {
 				librariesWithoutDuplicity := make(map[string][]string)
 				for libraryKey, library := range commitFromPipeline.Libraries {
 					librariesWithoutDuplicity[libraryKey] = removeDuplicateStrings(library)
 				}
-
+				var authorEmails []string
+				authorEmails = append(authorEmails, commitFromPipeline.AuthorEmail)
 				optimizedCommit := commit.OptimizedCommitForExport{
-					AuthorEmail: commitFromPipeline.AuthorEmail,
-					Date:        commitDateStartHour.String(),
-					Languages:   commitLanguages,
-					Libraries:   librariesWithoutDuplicity,
-					Insertions:  commitInsertions,
-					Deletions:   commitDeletions,
-					Commits:     1,
+					AuthorEmails: authorEmails,
+					Date:         commitDateStartHour.String(),
+					Languages:    commitLanguages,
+					Libraries:    librariesWithoutDuplicity,
+					Insertions:   commitInsertions,
+					Deletions:    commitDeletions,
+					Commits:      1,
 				}
 
 				if r.HashImportant {
@@ -696,14 +715,16 @@ loop:
 		return preparedCommitsDataForExport[i].Date < preparedCommitsDataForExport[j].Date
 	})
 
-	for _, preparedCommitsDataForExportItem := range preparedCommitsDataForExport {
+	for preparedCommitsDataForExportItemIndex, preparedCommitsDataForExportItem := range preparedCommitsDataForExport {
 		commitData, err := json.Marshal(preparedCommitsDataForExportItem)
 		if err != nil {
 			fmt.Printf("Couldn't write commit day data to file. CommitDate: %s Error: %s", preparedCommitsDataForExportItem.Date, err.Error())
 			continue
 		}
-		fmt.Fprintln(w, string(commitData))
+
+		fmt.Fprintln(w, string(commitData)+getCommitJSonSuffix(len(preparedCommitsDataForExport), preparedCommitsDataForExportItemIndex))
 	}
+	fmt.Fprintln(w, "]")
 	w.Flush() // important
 	file.Close()
 
