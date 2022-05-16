@@ -25,7 +25,6 @@ import (
 	"github.com/Techloopio/extractor_tool/librarydetection/languages"
 	"github.com/Techloopio/extractor_tool/obfuscation"
 	"github.com/Techloopio/extractor_tool/ui"
-	"github.com/mholt/archiver"
 )
 
 // RepoExtractor is responsible for all parts of repo extraction process
@@ -728,16 +727,7 @@ loop:
 	w.Flush() // important
 	file.Close()
 
-	err = archiver.Archive([]string{repoDataPath}, zipPath)
-	if err != nil {
-		fmt.Println("Couldn't make zip archive of the artifact. Error:", err.Error())
-		return err
-	} else {
-		fmt.Println("File Exported!")
-	}
-
-	// We don't need this because we already have zip file
-	os.Remove(repoDataPath)
+	fmt.Println("File Exported!")
 	return nil
 }
 
