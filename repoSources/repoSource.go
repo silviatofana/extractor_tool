@@ -35,7 +35,7 @@ func ExtractFromSource(source RepoSource, config ExtractConfig) error {
 	if config.OutputPath == "" {
 		outputDir, err := ioutil.TempDir("", "clone_dir_")
 		if err != nil {
-			return fmt.Errorf("couldn't create temp dir for artifacts. Try to set it with --output_path. Error: %s", err.Error())
+			return fmt.Errorf("couldn't create temp dir for export. Try to set it with --output_path. Error: %s", err.Error())
 		}
 		config.OutputPath = outputDir
 	}

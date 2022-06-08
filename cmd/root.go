@@ -49,7 +49,7 @@ func init() {
 	emailString = rootCmd.PersistentFlags().String("emails", "", "Predefined emails. Example: \"alim.giray@codersrank.io,alimgiray@gmail.com\"")
 	seedsString = rootCmd.PersistentFlags().String("seeds", "", "The seed is used to find similar emails. Example: \"alimgiray, alimgiray@codersrank.io\"")
 	RootConfig.GitPath = rootCmd.PersistentFlags().String("git_path", "", "where the Git binary is")
-	RootConfig.OutPutPath = rootCmd.PersistentFlags().String("output_path", "./artifacts", "Where to put output file. Existing artifacts will be overwritten.")
+	RootConfig.OutPutPath = rootCmd.PersistentFlags().String("output_path", "./export", "Where to put output file. Existing exports will be overwritten.")
 	RootConfig.HashImportant = rootCmd.PersistentFlags().Bool("hash_important", false, "Emails will be hashed.")
 }
 

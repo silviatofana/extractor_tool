@@ -73,7 +73,7 @@ func (r *RepoExtractor) Extract() error {
 
 	err = r.export()
 	if err != nil {
-		fmt.Println("Couldn't export commits to artifact. Error:", err.Error())
+		fmt.Println("Couldn't export commits to export. Error:", err.Error())
 		return err
 	}
 
@@ -621,7 +621,7 @@ func getCommitJSonSuffix(commitSliceLength int, commitIndex int) string {
 
 // Writes result to the file
 func (r *RepoExtractor) export() error {
-	fmt.Println("Creating artifact at: " + r.OutputPath)
+	fmt.Println("Creating export at: " + r.OutputPath)
 
 	repoDataPath := r.OutputPath + "_techloop.json"
 	// Remove old files
@@ -726,7 +726,7 @@ loop:
 	file.Close()
 
 	fmt.Println("Exported!")
-	fmt.Printf("File is located in folder artifacts (%v)\n", repoDataPath)
+	fmt.Printf("File is located in folder export (%v)\n", repoDataPath)
 	return nil
 }
 

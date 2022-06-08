@@ -17,7 +17,7 @@ cd repo_info_extractor
 go run . local --repo_path {path to repository}
 ```
 
-Extracted JSON files are located in artifacts folder (`./artifacts/*`)
+Extracted JSON files are located in export folder (`./export/*`)
 
 ### Available commands
 You can see the available commands and flags with the `--help` flag. For example:

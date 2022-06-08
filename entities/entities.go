@@ -8,7 +8,7 @@ type Repository struct {
 	ID string
 	// FullName the full name of the repo including the vendor. e.g. microsoft/vscode
 	FullName string
-	// Name this name will be used to save the artifact e.g. vscode
+	// Name this name will be used to save the export e.g. vscode
 	Name string
 	// CloneURL this URL needs to be used to clone the repo
 	CloneURL string
