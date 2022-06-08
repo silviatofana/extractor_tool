@@ -624,10 +624,8 @@ func (r *RepoExtractor) export() error {
 	fmt.Println("Creating artifact at: " + r.OutputPath)
 
 	repoDataPath := r.OutputPath + "_techloop.json"
-	zipPath := r.OutputPath + "__techloop.json.zip"
 	// Remove old files
 	os.Remove(repoDataPath)
-	os.Remove(zipPath)
 
 	// Create directory
 	directories := strings.Split(r.OutputPath, string(os.PathSeparator))
@@ -727,7 +725,8 @@ loop:
 	w.Flush() // important
 	file.Close()
 
-	fmt.Println("File Exported!")
+	fmt.Println("Exported!")
+	fmt.Printf("File is located in folder artifacts (%v)\n", repoDataPath)
 	return nil
 }
 
