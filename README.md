@@ -14,7 +14,7 @@ The extractor_tool is written in Go, so you can either clone the repo and compil
 ```
 git clone --depth 1 https://github.com/Techloopio/extractor_tool.git
 cd repo_info_extractor
-go run . local --repo_path {path to repository}
+go run . local --repo_path {relative path to repository}
 ```
 
 Extracted JSON files are located in export folder (`./export/*`)
