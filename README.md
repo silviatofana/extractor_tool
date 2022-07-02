@@ -6,8 +6,12 @@ It creates a JSON file which gets the info from metadata stored in your commits.
 Other information such as remote URLs, file names, emails, names is hashed. The Extractor will recognize if two commits belong to the same file but won’t know the files name. Moreover, the JSON output is saved on your computer and you can check for yourself what data is extracted and if it crosses your employers’ NDA before uploading it to EXP Timeline.
 Once uploaded, the JSON file is classified as user content and is processed according to the [Terms and Conditions](https://www.lmc.eu/en/terms-of-services/specific-terms-of-services/techloop/).
 
+![Tux, the Linux mascot](/public//timeline.png)
+
 ## Dependencies
 - [GO](https://go.dev/dl/)
+
+![](https://media.giphy.com/media/11ISwbgCxEzMyY/giphy.gif)
 
 ## How to use it
 The extractor_tool is written in Go, so you can either clone the repo and compile the program or just download the binary and start using it.
