@@ -10,7 +10,6 @@ Once uploaded, the JSON file is classified as user content and is processed acco
 
 ## Dependencies
 - [GO](https://go.dev/dl/)
-
 ![](https://media.giphy.com/media/11ISwbgCxEzMyY/giphy.gif)
 
 ## How to use it
